@@ -1,0 +1,48 @@
+version: '3'
+
+services:
+  constitution-ai:
+    build: .
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./temp_docs:/app/temp_docs
+    environment:
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - mongodb
+      - ollama
+    networks:
+      - app-network
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - app-network
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - app-network
+    # Pull models during startup
+    command: >
+      sh -c "ollama serve & sleep 10 && 
+             ollama pull llama2 && 
+             ollama pull mistral && 
+             tail -f /dev/null"
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+  ollama_data:
